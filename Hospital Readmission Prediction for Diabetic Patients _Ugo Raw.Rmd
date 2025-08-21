@@ -1,0 +1,741 @@
+---
+Title: "Hospital Readmission Prediction for Diabetic Patients"
+Author: "Ugo"
+Date: "August 2025"
+Output:l
+Html_document: default
+Word_document: default
+Pdf_document: default
+---
+  
+  
+##Introduction
+ 
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)  #The `echo = FALSE` parameter was added to the code chunk to PREVENT  printing of the R code that generated the plot.
+
+knitr::opts_chunk$set(error = TRUE) #The `error = TRUE` parameter was added to the code chunk to PREVENT the R code to stop on error when running the code chunks.
+
+```
+
+# load required libraries / additional files
+
+```{r Library,message=FALSE, echo=FALSE }
+
+if(!require(openxlsx)){
+  install.packages("openxlsx", repos = "https://www.stats.bris.ac.uk/R/")
+  library(openxlsx)}
+
+if(!require(readxl)){
+  install.packages("readxl", repos = "https://www.stats.bris.ac.uk/R/")
+  library(readxl)}
+
+if(!require(readr)){
+  install.packages("readr", repos = "https://www.stats.bris.ac.uk/R/")
+  library(readr)}
+
+if(!require(doParallel)){
+    install.packages("doParallel", repos = "https://www.stats.bris.ac.uk/R/")
+    library(doParallel)}
+
+if(!require(vip)){
+    install.packages("vip", repos = "https://www.stats.bris.ac.uk/R/")
+    library(vip)}
+
+if(!require(doParallel)){
+    install.packages("doParallel", repos = "https://www.stats.bris.ac.uk/R/")
+    library(doParallel)}
+ 
+if(!require(Hmisc)){
+  install.packages("Hmisc", repos = "https://www.stats.bris.ac.uk/R/")
+  library(Hmisc)}
+
+if(!require(corrplot)){
+  install.packages("corrplot", repos = "https://www.stats.bris.ac.uk/R/")
+  library(corrplot)}
+
+if(!require(dplyr)){
+  install.packages("dplyr", repos = "https://www.stats.bris.ac.uk/R/")
+  library(dplyr)}
+
+if(!require(ggplot2)){
+  install.packages("ggplot2", repos = "https://www.stats.bris.ac.uk/R/")
+  library(ggplot2)}
+
+if(!require(knitr)){
+  install.packages("knitr",repos = "https://www.stats.bris.ac.uk/R/")
+  library(knitr)}
+
+if(!require(class)){
+  install.packages("class",repos = "https://www.stats.bris.ac.uk/R/")
+  library(class)}
+
+if(!require(lme4)){
+  install.packages("lme4", repos = "https://www.stats.bris.ac.uk/R/")
+  library(lme4)}
+
+if(!require(MASS)){
+  install.packages("MASS", repos = "https://www.stats.bris.ac.uk/R/")
+  library(MASS)}
+
+if(!require(tidyverse)){
+  install.packages("tidyverse", repos = "https://www.stats.bris.ac.uk/R/")
+  library(tidyverse)}
+
+if(!require(assertr)){
+  install.packages("assertr", repos = "https://www.stats.bris.ac.uk/R/")
+  library(assertr)}
+
+if(!require(ggpubr)){
+  install.packages("ggpubr", repos = "https://www.stats.bris.ac.uk/R/")
+  library(ggpubr)}
+
+if(!require(lubridate)){
+  install.packages("lubridate", repos = "https://www.stats.bris.ac.uk/R/")
+  library(lubridate)}
+
+if(!require(flextable)){
+  install.packages("flextable", repos = "https://www.stats.bris.ac.uk/R/")
+  library(flextable)}
+
+if(!require(patchwork)){
+  install.packages("patchwork", repos = "https://www.stats.bris.ac.uk/R/")
+  library(patchwork)}
+
+if(!require(randomForest)){
+  install.packages("randomForest", repos = "https://www.stats.bris.ac.uk/R/")
+  library(randomForest)}
+
+if(!require(pROC)){
+  install.packages("pROC", repos = "https://www.stats.bris.ac.uk/R/")
+  library(pROC)}
+
+if(!require(officer)){
+  install.packages("officer", repos = "https://www.stats.bris.ac.uk/R/")
+  library(officer)} 
+
+```
+
+
+```{r Recode Responce Variable for Binary Classification, include=FALSE}
+
+if(!require(caret)){
+  install.packages("caret", repos = "https://www.stats.bris.ac.uk/R/")
+  library(caret)}
+```
+
+
+
+***START   DATA PREP***
+```{r Load the dataset, echo=FALSE}
+
+#setwd("C:/Users/N469820/OneDrive - United Utilities/Desktop/Ugo Uwe") #  Make sure you set your working Dir
+
+
+#df <- read_csv("diabetic_data.csv")
+
+#View(df)
+#dim(df)
+#sum(is.na(df))
+library(readr)
+
+# Use a different name:
+df <- readr::read_csv("diabetic_data.csv", show_col_types = FALSE)
+
+dim(df)
+sum(is.na(df))
+# Optional per-column NA counts:
+colSums(is.na(df))
+
+```
+**Recode Responce Variable for Binary Classification**
+
+```{r Recode Responce Variable for Binary Classification, include=FALSE}
+
+##Binary Classification – Focus on early readmissions (within 30 days)
+
+## readmitted = 1 if readmitted == '<30 Days' and 0 if readmitted == '>30 Days' or readmitted == 'NO'
+
+df <- df %>% mutate(readmitted = ifelse(readmitted == "<30", 1, 0))
+
+```
+
+
+**Handle Missing Values**
+
+```{r Handle Missing Values, echo=FALSE}
+
+# Replace "?" with NA across all columns
+
+df[df == "?"] <- NA
+
+#Check sum and % of missing per column
+
+sum(is.na(df))
+
+# Calculate and format proportion of missing values per column
+na_summary <- sapply(df, function(x) sum(is.na(x)) / length(x)) %>%
+  round(2) %>%
+  sort(decreasing = TRUE) %>%
+  as.data.frame()
+
+# Format data frame for flextable
+na_summary <- tibble::rownames_to_column(na_summary, var = "Factors")
+colnames(na_summary)[2] <- "Proportion_Missing"
+
+# Display using flextable
+flextable(na_summary)
+
+```
+```{r Drop high-missing columns, echo=FALSE}
+
+# Drop high-missing columns
+
+df = subset(df , select = -c(`weight`,`payer_code`,`medical_specialty`))
+
+View(df)
+```
+
+**Impute missing values**
+
+```{r Impute missing values, echo=FALSE}
+
+# Impute missing values (Imputes numeric columns with mean and Imputes character/factor columns with mode)
+
+library(Hmisc)
+
+df_imputed <- df %>%
+  mutate(across(everything(), ~ impute(.x, fun = function(x) {
+    if (is.numeric(x)) "mean" else "mode"
+  })))
+
+# Convert imputed objects (of class 'impute') back to base types
+df_imputed <- df_imputed %>%
+  mutate(across(everything(), ~ as.vector(.x)))
+
+View(df_imputed)
+
+sum(is.na(df_imputed))
+```
+
+**Drop Duplicates / Unnecessary Columns**
+```{r Drop Duplicates / Unnecessary Columns, echo=FALSE}
+
+# Drop high-missing columns - Some IDs may not help in prediction.
+
+df <- df_imputed %>% distinct()  # remove duplicate rows
+
+df = subset(df_imputed , select = -c(`encounter_id`,`patient_nbr`,`examide`,`citoglipton`))
+
+View(df)
+
+dim(df)
+
+#`examide`,`citoglipton` only have one label hence will affect correlation
+```
+**Convert all columns to the proper datatype required for this analysis**
+
+```{r Convert Categorical Columns to Factors, echo=FALSE}
+
+df$race <- as.factor(df$race)
+df$gender <- as.factor(df$gender)
+df$age <- as.factor(df$age)
+df$readmitted <- as.factor(df$readmitted)
+
+##Convert and Recode Lab Test Results to ordered factors 
+
+df$max_glu_serum <- factor(df$max_glu_serum, levels = c("None", "Norm", ">200", ">300"), ordered = TRUE)
+df$A1Cresult <- factor(df$A1Cresult, levels = c("None", "Norm", ">7", ">8"), ordered = TRUE)
+
+##Convert Medication Use to Factors
+
+med_columns <- names(df)[grep("metformin|insulin|glipizide|glyburide|pioglitazone|rosiglitazone|change|diabetesMed|examide|citoglipton|tolazamide|troglitazone|miglitol|examide|acarbose|tolbutamide|glimepiride|chlorpropamide|nateglinide|repaglinide", names(df))]
+
+df[med_columns] <- lapply(df[med_columns], factor)
+
+
+View(df)
+
+str(df)
+```
+
+
+**Exploratory Data Analysis (EDA)**
+
+```{r Responce Variable Distribution, echo=FALSE}
+
+# Binary target
+ggplot(df, aes(x = factor(readmitted), fill = factor(readmitted))) +
+  
+  geom_bar() + 
+  
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.2) +
+  
+  scale_fill_manual(values = c("0" = "lightgreen", "1" = "Red"), labels = c("No", "Within 30 days")) +
+  
+  labs(title = "Readmission Distribution", x = "Readmission (Binary)", y = "Count")
+
+```
+```
+
+```
+
+
+**Numerical Feature Summary**
+
+```{r Numerical Feature Summary, echo=FALSE}
+# Select numeric columns
+
+numeric_cols <- names(df)[sapply(df, is.numeric)]
+
+numeric_cols
+```
+
+
+```{r Numerical Feature Summary, echo=FALSE}
+
+# Histograms for numeric variables
+df %>%
+  dplyr::select(all_of(numeric_cols)) %>%  # use all_of() for safety
+  
+  gather(key = "Feature", value = "Value") %>%
+  
+  ggplot(aes(x = Value)) +
+  
+  geom_histogram(fill = "lightgreen", bins = 30) +
+  
+  facet_wrap(~Feature, scales = "free") +
+  
+  theme_minimal()
+
+##select(...) → picks your numeric columns by name.
+
+#gather() → reshapes them to a long format with "Feature" and "Value" columns.
+
+#geom_histogram() → draws histograms with 30 bins (adjustable).
+
+#facet_wrap(~ Feature, scales = "free") → makes one histogram per feature with independent
+```
+
+```{r t-test / ANOVA for Numerical Features, echo=FALSE}
+
+t_results <- lapply(numeric_cols, function(col) {
+  
+  test <- t.test(df[[col]] ~ df$readmitted)
+  
+  return(data.frame(Feature = col, p_value = test$p.value))
+  
+}) %>% bind_rows()
+
+# Sort by significance
+t_results <- t_results %>% arrange(p_value)
+
+print(t_results)
+
+sig_nums <- t_results %>% filter(p_value < 0.05)
+```
+
+```{r Boxplots for Significant Numeric Features, echo=FALSE}
+
+# Plot only significant numeric features
+for (feature in sig_nums$Feature) {
+  p <- ggplot(df, aes_string(x = factor(df$readmitted), y = feature, fill = factor(df$readmitted))) +
+    geom_boxplot() +
+    scale_fill_manual(values = c("0" = "skyblue", "1" = "tomato"),
+                      labels = c("No", "Within 30 days")) +
+    labs(title = paste("Distribution of", feature, "by Readmission"),
+         x = "Readmission (Binary)", y = feature) +
+    theme_minimal()
+  print(p)
+}
+
+# Save as PDF
+ggsave("Significant_Numeric_features.pdf", plot = p, 
+       width = 10, height = 8, units = "in")
+```
+```{r Facet Boxplots for Significant Numeric Features, echo=FALSE}
+
+df %>%
+  
+  dplyr::select(all_of(sig_nums$Feature), readmitted) %>%
+  
+  gather(key = "Feature", value = "Value", -readmitted) %>%
+  
+  ggplot(aes(x = factor(readmitted), y = Value, fill = factor(readmitted))) +
+  
+  geom_boxplot() +
+  
+  facet_wrap(~Feature, scales = "free", ncol = 3) +
+  
+  scale_fill_manual(values = c("0" = "skyblue", "1" = "tomato"),
+                    
+                    labels = c("No", "Within 30 days")) +
+  
+  labs(x = "Readmission (Binary)", y = "Value",
+       
+       title = "Numeric Feature Distributions by Readmission Status") +
+  
+  theme_minimal()
+
+# Save as PDF
+ggsave("Significant_Numeric_features.pdf", plot = p, 
+       width = 10, height = 8, units = "in")
+```
+
+**Categorical Feature Summary**
+
+```{r Categorical Feature Summary, echo=FALSE}
+
+# Select categorical/ factor variables
+factor_cols <- names(df)[sapply(df, is.factor)]
+factor_cols
+```
+```{r Bar plots for categorical variables, echo=FALSE}
+df %>%
+  dplyr::select(all_of(factor_cols)) %>%       # select categorical features
+  mutate(across(everything(), as.character)) %>% # ensure all are characters
+  pivot_longer(cols = everything(), 
+               names_to = "Feature", 
+               values_to = "Value") %>%        # long format for ggplot
+  ggplot(aes(x = Value, fill = Value)) +       # plot distribution
+  geom_bar() +
+  facet_wrap(~Feature, scales = "free") +      # facet by feature
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r Chi-Square Test for Categorical Features, echo=FALSE}
+# Run chi-square tests (Binary target recommended)
+chi_results <- lapply(factor_cols, function(col) {
+  
+  tbl <- table(df[[col]], df$readmitted)
+  
+  # Only run if table has at least 2 rows and 2 columns
+  if (nrow(tbl) > 1 && ncol(tbl) > 1) {
+    
+    test <- suppressWarnings(chisq.test(tbl))
+    
+    return(data.frame(Feature = col, p_value = test$p.value))
+    
+  } else {
+    
+    return(data.frame(Feature = col, p_value = NA))
+  }
+  
+}) %>% bind_rows()
+
+# Sort by significance
+chi_results <- chi_results %>% arrange(p_value)
+
+print(chi_results)
+
+sig_cats <- chi_results %>% filter(!is.na(p_value) & p_value < 0.05)
+```
+
+
+```{r Bar Plots for Significant Categorical Features, echo=FALSE}
+# Plot only significant categorical features
+# Plot only significant categorical features
+for (feature in sig_cats$Feature) {
+  
+  p <- ggplot(df, aes_string(x = feature, fill = factor(df$readmitted))) +
+    
+    geom_bar(position = "fill") +
+    
+    scale_fill_manual(values = c("0" = "skyblue", "1" = "tomato"),
+                      
+                      labels = c("No", "Within 30 days")) +
+    
+    labs(title = paste("Readmission Proportions by", feature),
+         
+         x = feature, y = "Proportion") +
+    
+    theme_minimal() +
+    
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  print(p)
+}
+
+```
+
+```{r Facet Plot for Multiple Categorical Features, echo=FALSE}
+df %>%
+  dplyr::select(all_of(sig_cats$Feature), readmitted) %>%
+  
+  gather(key = "Feature", value = "Value", -readmitted) %>%
+  
+  ggplot(aes(x = Value, fill = factor(readmitted))) +
+  
+  geom_bar(position = "fill") +
+  
+  facet_wrap(~Feature, scales = "free") +
+  
+  scale_fill_manual(values = c("0" = "skyblue", "1" = "tomato"),
+                      
+                      labels = c("No", "Within 30 days")) +
+  
+  theme_minimal() +
+  
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Save as PDF
+ggsave("significant_categorical_features.pdf", plot = p, dpi = 300,
+       width = 10, height = 8, units = "in")
+
+```
+**Combine Results for Feature Selection**
+
+```{r Combine Significant Features Selection, echo=FALSE}
+list(
+  Significant_Categorical = sig_cats$Feature,
+  Significant_Numeric = sig_nums$Feature
+)
+```
+
+**Dynamic re-coding of all variables to NUMERIC**
+
+```{r Dynamic recoding of all variables to NUMERIC, echo=FALSE}
+
+# Re-code all categorical types (character, factor, ordered factor) to numeric
+
+df_numeric_cats <- df %>%
+  
+  mutate(across(where(~ is.character(.) | is.factor(.) | is.ordered(.)),~ as.numeric(as.factor(.))))
+
+View(df_numeric_cats )
+
+#How it works
+##across() → applies a transformation to selected columns.
+
+#where(~ is.factor(.) | is.character(.)) → selects only factor or character columns (categorical variables).
+
+#as.factor(.) → turns character columns into factors first.
+
+#as.numeric() → converts factor levels to integers (1, 2, 3, ...).
+
+```
+
+**Correlation Matrix**
+
+```{r  Correlation Matrix accross all variables, echo=FALSE}
+
+df_numeric_cats<-na.omit(df_numeric_cats)
+
+cor_matrix <- round(cor(df_numeric_cats, use = "complete.obs"), digits = 1)
+
+
+pdf("correlation_plot.pdf", width = 8, height = 8)
+
+corrplot(cor_matrix, method = "shade", addCoef.col="lightgreen", type="upper", tl.cex = 0.4, number.cex=0.4)
+
+
+```
+
+**Create a flex table with the Correlation Matrix**
+
+```{r  Correlation Matrix accross all variables, echo=FALSE}
+
+Cor_Table<-data.frame(cor_matrix)
+
+#flextable(Cor_Table)
+Cor_Table <- cbind(Feature = rownames(Cor_Table), Cor_Table)
+rownames(Cor_Table) <- NULL
+
+ft <- flextable(Cor_Table) %>%
+  autofit() %>%
+  set_header_labels(Feature = "Feature / Variable")
+
+# Save to Word document
+read_docx() %>%
+  body_add_flextable(ft) %>%
+  print(target = "Correlation_Table.docx")
+
+
+# Convert flextable back to data frame
+df_export <- as.data.frame(ft$body$dataset)
+
+# Write to Excel
+#write.xlsx(df_export, "Correlation_Table.xlsx", rowNames = FALSE)
+```
+
+
+
+**Modelling pipeline (df_sig)**
+
+```{r Reg_Dat}
+
+df_sig<-df[,c("race","age",  #Demographic Info
+"time_in_hospital","number_inpatient","num_procedures",   #History
+"num_lab_procedures","number_diagnoses","change","A1Cresult", #History
+"number_emergency", "discharge_disposition_id","admission_type_id","number_outpatient" ,  #History
+ "num_medications", "max_glu_serum", "repaglinide", "glipizide" , "insulin", "metformin", "diabetesMed", "readmitted")] #medications
+
+
+# ensure target is factor with levels "no" and "yes"
+df_sig <- df_sig%>%
+  mutate(readmitted = factor(ifelse(readmitted==1, "yes", "no"), levels = c("no","yes")))
+
+View(df_sig)
+```
+
+**Prepare data & split**
+
+```{r data split, echo=FALSE}
+
+set.seed(22061463)
+
+# #stratified train/test data split
+train_data <- df_sig %>%
+  
+  group_by(readmitted) %>%
+  
+
+  sample_frac(0.8) %>%
+  
+  ungroup()
+
+test_data <- anti_join(df_sig, train_data, by = colnames(df_sig))
+
+View(train_data) 
+View(test_data) 
+```
+
+**Check proportions**
+
+```{r Check proportionst, echo=FALSE}
+
+prop.table(table(train_data$readmitted))
+
+prop.table(table(test_data$readmitted)) 
+
+```
+**models**
+
+```{r Logistic regression models, echo=FALSE}
+
+# Logistic regression (glm)
+log_model <- glm(readmitted ~ ., 
+                 data = train_data, 
+                 family = binomial)  
+summary(log_model)
+```
+
+```{r predictions and evaluation, echo=FALSE}
+
+# Make predictions (probabilities) on the test set
+pred_probs <- predict(log_model, newdata = test_data, type = "response")
+
+# Convert probabilities to class predictions (threshold = 0.5)
+pred_classes <- ifelse(pred_probs >= 0.5, "yes", "no")
+
+# Check accuracy
+accuracy <-mean(pred_classes == test_data$readmitted)
+accuracy
+```
+
+
+```{r Confusion matrix, echo=FALSE}
+
+# Confusion matrix
+table(Predicted = pred_classes, Actual = test_data$readmitted)
+
+```
+
+```{r ROC Curve & AUC, echo=FALSE}
+
+roc_obj <- roc(test_data$readmitted, pred_probs, levels = c("no", "yes"))
+
+# Plot ROC
+plot(roc_obj, col = "blue", lwd = 2, main = "ROC Curve for Logistic Regression")
+
+auc(roc_obj)  # Area Under Curve
+
+```
+
+# Random Forest (ranger) - tune mtry and min_n
+
+```{r Random Forest (ranger) - tune mtry and min_n, echo=FALSE}
+
+library(ranger)
+
+# Example manual training
+rf_model <- ranger(
+  formula = readmitted ~ .,
+  data = train_data,
+  num.trees = 500,
+  mtry = 5,                # manually set or loop over
+  min.node.size = 10,      # manually set or loop over
+  importance = "impurity",
+  probability = TRUE
+)
+```
+
+```{r  Predict on test set (probabilities), echo=FALSE}
+
+# Predict probabilities
+rf_probs <- predict(rf_model, data = test_data)$predictions[, "yes"]
+
+# Predicted classes (threshold = 0.5)
+rf_preds <- ifelse(rf_probs > 0.5, "yes", "no")
+
+# Confusion matrix
+cm <- table(Predicted = rf_preds, Actual = test_data$readmitted)
+
+# Accuracy
+accuracy <- sum(diag(cm)) / sum(cm)
+cat("Accuracy:", round(accuracy, 3), "\n")
+```
+```{r RD Confusion matrix, echo=FALSE}
+
+# Confusion matrix
+
+table(Predicted = rf_preds, Actual = test_data$readmitted)
+
+```
+
+```{r ROC Curve & AUC, echo=FALSE}
+
+accuracy <- sum(diag(cm)) / sum(cm)
+precision <- cm["yes", "yes"] / sum(cm["yes", ])
+recall <- cm["yes", "yes"] / sum(cm[, "yes"])        # Sensitivity
+specificity <- cm["no", "no"] / sum(cm[, "no"])      # True negative rate
+
+# ROC object
+#roc_obj <- roc(test_data$readmitted, rf_probs, levels = c("no", "yes"))
+
+# Plot ROC
+plot(roc_obj, col = "#2C7BB6", lwd = 2, main = "Random Forest ROC Curve")
+abline(a = 0, b = 1, lty = 2, col = "gray")
+
+# Overlay metrics on the plot
+text(0.5, 0.3, paste("Accuracy:", round(accuracy, 3)), col = "black", cex = 0.9)
+
+text(0.5, 0.25, paste("Precision:", round(precision, 3)), col = "black", cex = 0.9)
+
+text(0.5, 0.2, paste("Recall:", round(recall, 3)), col = "black", cex = 0.9)
+
+text(0.5, 0.15, paste("Specificity:", round(specificity, 3)), col = "black", cex = 0.9)
+
+text(0.5, 0.1, paste("AUC:", round(auc(roc_obj), 3)), col = "black", cex = 0.9)
+
+```
+
+
+
+**Download The Data**
+
+```{r predictions and evaluation, echo=FALSE}
+
+#write.xlsx(prediction, "lgm_pr.xlsx")
+write.xlsx(test_data, "test_data.xlsx")
+write.xlsx(train_data, "train_datar.xlsx")
+write.xlsx(df_numeric_cats, "df_numeric&cats.xlsx")
+write.xlsx(df_sig, "df_Signifcant Variables.xlsx")
+write.xlsx(df, "df_Raw_Cleaned.xlsx")
+```
+
+
