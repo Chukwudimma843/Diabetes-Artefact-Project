@@ -116,7 +116,6 @@ When positive class is rare, consider:
 ### Machine learning models
 - **Random Forest:** non‑linear interactions, robust to noise; tune trees (`ntree`), depth, and `mtry` via cross‑validation.
 - **XGBoost:** gradient boosting on decision trees; tune `eta`, `max_depth`, `min_child_weight`, `subsample`, `colsample_bytree`, `lambda`, `alpha`, `nrounds` with k‑fold CV.
-- **Regularized GLM (optional):** LASSO / Elastic Net via `glmnet` for embedded feature selection.
 
 ### Validation strategy
 - **Train/test split** with fixed `set.seed(...)` for reproducibility.
