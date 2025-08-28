@@ -131,7 +131,6 @@ if(!require(caret)){
 ***START   DATA PREP***
 ```{r Load the dataset, echo=FALSE}
 
-#setwd("C:/Users/N469820/OneDrive - United Utilities/Desktop/Ugo Uwe") #  Make sure you set your working Dir
 
 
 #df <- read_csv("diabetic_data.csv")
