@@ -1,0 +1,843 @@
+---
+title: "Re_Analysis"
+author: "Ugochukwu"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##Introduction
+ 
+
+# load required libraries / additional files
+
+```{r Library,message=FALSE, echo=FALSE }
+
+if(!require(openxlsx)){
+  install.packages("openxlsx", repos = "https://www.stats.bris.ac.uk/R/")
+  library(openxlsx)}
+
+if(!require(readxl)){
+  install.packages("readxl", repos = "https://www.stats.bris.ac.uk/R/")
+  library(readxl)}
+
+if(!require(readr)){
+  install.packages("readr", repos = "https://www.stats.bris.ac.uk/R/")
+  library(readr)}
+
+if(!require(doParallel)){
+    install.packages("doParallel", repos = "https://www.stats.bris.ac.uk/R/")
+    library(doParallel)}
+
+if(!require(vip)){
+    install.packages("vip", repos = "https://www.stats.bris.ac.uk/R/")
+    library(vip)}
+
+if(!require(doParallel)){
+    install.packages("doParallel", repos = "https://www.stats.bris.ac.uk/R/")
+    library(doParallel)}
+ 
+if(!require(Hmisc)){
+  install.packages("Hmisc", repos = "https://www.stats.bris.ac.uk/R/")
+  library(Hmisc)}
+
+if(!require(corrplot)){
+  install.packages("corrplot", repos = "https://www.stats.bris.ac.uk/R/")
+  library(corrplot)}
+
+if(!require(dplyr)){
+  install.packages("dplyr", repos = "https://www.stats.bris.ac.uk/R/")
+  library(dplyr)}
+
+if(!require(ggplot2)){
+  install.packages("ggplot2", repos = "https://www.stats.bris.ac.uk/R/")
+  library(ggplot2)}
+
+if(!require(knitr)){
+  install.packages("knitr",repos = "https://www.stats.bris.ac.uk/R/")
+  library(knitr)}
+
+if(!require(class)){
+  install.packages("class",repos = "https://www.stats.bris.ac.uk/R/")
+  library(class)}
+
+if(!require(lme4)){
+  install.packages("lme4", repos = "https://www.stats.bris.ac.uk/R/")
+  library(lme4)}
+
+if(!require(MASS)){
+  install.packages("MASS", repos = "https://www.stats.bris.ac.uk/R/")
+  library(MASS)}
+
+if(!require(tidyverse)){
+  install.packages("tidyverse", repos = "https://www.stats.bris.ac.uk/R/")
+  library(tidyverse)}
+
+if(!require(assertr)){
+  install.packages("assertr", repos = "https://www.stats.bris.ac.uk/R/")
+  library(assertr)}
+
+if(!require(ggpubr)){
+  install.packages("ggpubr", repos = "https://www.stats.bris.ac.uk/R/")
+  library(ggpubr)}
+
+if(!require(lubridate)){
+  install.packages("lubridate", repos = "https://www.stats.bris.ac.uk/R/")
+  library(lubridate)}
+
+if(!require(flextable)){
+  install.packages("flextable", repos = "https://www.stats.bris.ac.uk/R/")
+  library(flextable)}
+
+if(!require(patchwork)){
+  install.packages("patchwork", repos = "https://www.stats.bris.ac.uk/R/")
+  library(patchwork)}
+
+if(!require(randomForest)){
+  install.packages("randomForest", repos = "https://www.stats.bris.ac.uk/R/")
+  library(randomForest)}
+
+if(!require(pROC)){
+  install.packages("pROC", repos = "https://www.stats.bris.ac.uk/R/")
+  library(pROC)}
+
+if(!require(officer)){
+  install.packages("officer", repos = "https://www.stats.bris.ac.uk/R/")
+  library(officer)} 
+
+```
+
+
+```{r Recode Responce Variable for Binary Classification, include=FALSE}
+
+if(!require(caret)){
+  install.packages("caret", repos = "https://www.stats.bris.ac.uk/R/")
+  library(caret)}
+```
+
+
+
+***START   DATA PREP***
+```{r Load the dataset, echo=FALSE}
+
+#setwd("C:/Users/sixsix - /Users/sixsix/Desktop/MY R CODES AND FILE") #  **Make sure you set your working Dir**
+
+df <- read.csv("diabetic_data.csv")
+
+#View(df)
+dim(df)
+sum(is.na(df))
+```
+
+
+```{r}
+#Binary Classification – With  focus on early readmissions (within 30 days)
+
+## readmitted = 1 if readmitted == '<30 Days' and 0 if readmitted == '>30 Days' or readmitted == 'NO'
+
+df <- df %>% mutate(readmitted = ifelse(readmitted == "<30", 1, 0))
+
+#Check sum and % of missing per column
+
+sum(is.na(df))
+```
+
+
+```{r}
+# Calculate and format proportion of missing values per column
+na_summary <- sapply(df, function(x) sum(is.na(x)) / length(x)) %>%
+  round(2) %>%
+  sort(decreasing = TRUE) %>%
+  as.data.frame()
+
+# Format data frame for flextable
+na_summary <- tibble::rownames_to_column(na_summary, var = "Factors")
+colnames(na_summary)[2] <- "Proportion_Missing"
+
+# Display using flextable
+flextable(na_summary)
+```
+
+
+
+```{r}
+# Drop high-missing columns
+df = subset(df , select = -c(`weight`,`payer_code`,`medical_specialty`))
+df
+
+```
+
+
+
+```{r}
+# Simple mode function
+mode_fun <- function(x) {
+  x <- x[!is.na(x)]
+  if (length(x) == 0) return(NA)
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+# Correct imputation
+df_imputed <- df %>%
+  mutate(
+    across(where(is.numeric),
+           ~ ifelse(is.na(.), mean(., na.rm = TRUE), .)), #mean for the numeric
+    across(where(~ is.factor(.) || is.character(.)),
+           ~ ifelse(is.na(.), mode_fun(.), .)) #mode for the categorical
+  )
+
+sum(is.na(df_imputed))  # should be 0
+
+df_imputed
+
+df <- df_imputed %>%
+  distinct() %>%   # now truly removes duplicates
+  subset(select = -c(`encounter_id`,`patient_nbr`,`examide`,`citoglipton`))
+
+dim(df) # 7 redundant variables have been removed.
+```
+
+
+```{r}
+#convert the following to factors
+
+df$race <- as.factor(df$race)
+df$gender <- as.factor(df$gender)
+df$age <- as.factor(df$age)
+df$readmitted <- as.factor(df$readmitted)
+```
+
+
+```{r}
+##Convert and Recode Lab Test Results to ordered factors 
+
+df$max_glu_serum <- factor(df$max_glu_serum, levels = c("None", "Norm", ">200", ">300"), ordered = TRUE)
+df$A1Cresult <- factor(df$A1Cresult, levels = c("None", "Norm", ">7", ">8"), ordered = TRUE)
+```
+
+
+```{r}
+##Convert Medication Use to Factors
+
+med_columns <- names(df)[grep("metformin|insulin|glipizide|glyburide|pioglitazone|rosiglitazone|change|diabetesMed|examide|citoglipton|tolazamide|troglitazone|miglitol|examide|acarbose|tolbutamide|glimepiride|chlorpropamide|nateglinide|repaglinide", names(df))]
+
+df[med_columns] <- lapply(df[med_columns], factor)
+str(df)
+```
+
+
+#**Exploratory Data Analysis (EDA)**
+
+```{r}
+# Binary target
+ggplot(df, aes(x = factor(readmitted), fill = factor(readmitted))) +
+  
+  geom_bar() + 
+  
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.2) +
+  
+  scale_fill_manual(values = c("0" = "lightgreen", "1" = "Red"), labels = c("No", "Within 30 days")) +
+  
+  labs(title = "Readmission Distribution", x = "Readmission (Binary)", y = "Count")
+```
+
+
+
+
+
+#**Numerical Feature Summary**
+
+```{r}
+# Select numeric columns
+
+numeric_cols <- names(df)[sapply(df, is.numeric)]
+
+numeric_cols
+
+```
+
+```{r,Numerical Feature Summary,echo=TRUE}
+# Histograms for numeric variables
+df %>%
+  dplyr::select(all_of(numeric_cols)) %>%  # use all_of() for safety
+  
+  gather(key = "Feature", value = "Value") %>%
+  
+  ggplot(aes(x = Value)) +
+  
+  geom_histogram(fill = "lightgreen", bins = 30) +
+  
+  facet_wrap(~Feature, scales = "free") +
+  
+  theme_minimal()
+```
+
+#t-test/ANOVA for Numerical Features
+
+```{r,t-test / ANOVA for Numerical Features, echo=TRUE}
+t_results <- lapply(numeric_cols, function(col) {
+  
+  test <- t.test(df[[col]] ~ df$readmitted)
+  
+  return(data.frame(Feature = col, p_value = test$p.value))
+  
+}) %>% bind_rows()
+
+# Sort by significance
+t_results <- t_results %>% arrange(p_value)
+
+print(t_results)
+
+sig_nums <- t_results %>% filter(p_value < 0.05)
+```
+
+# Plot only significant numeric features
+
+```{r,Boxplots for Significant Numeric Features, echo=T}
+for (feature in sig_nums$Feature) {
+  p <- ggplot(df, aes_string(x = factor(df$readmitted), y = feature, fill = factor(df$readmitted))) +
+    geom_boxplot() +
+    scale_fill_manual(values = c("0" = "skyblue", "1" = "tomato"),
+                      labels = c("No", "Within 30 days")) +
+    labs(title = paste("Distribution of", feature, "by Readmission"),
+         x = "Readmission (Binary)", y = feature) +
+    theme_minimal()
+  print(p)
+}
+df %>%
+  
+  dplyr::select(all_of(sig_nums$Feature), readmitted) %>%
+  
+  gather(key = "Feature", value = "Value", -readmitted) %>%
+  
+  ggplot(aes(x = factor(readmitted), y = Value, fill = factor(readmitted))) +
+  
+  geom_boxplot() +
+  
+  facet_wrap(~Feature, scales = "free", ncol = 3) +
+  
+  scale_fill_manual(values = c("0" = "skyblue", "1" = "tomato"),
+                    
+                    labels = c("No", "Within 30 days")) +
+  
+  labs(x = "Readmission (Binary)", y = "Value",
+       
+       title = "Numeric Feature Distributions by Readmission Status") +
+  
+  theme_minimal()
+
+```
+
+#Categorical Feature Summary
+
+```{r,Categorical Feature Summary, echo=FALSE, echo=TRUE}
+
+# Select categorical/ factor variables
+factor_cols <- names(df)[sapply(df, is.factor)]
+factor_cols
+```
+
+
+```{r,Bar plots for categorical variables, echo=TRUE}
+#Categorical Feature Summary
+df %>%
+  dplyr::select(all_of(factor_cols)) %>%       # select categorical features
+  mutate(across(everything(), as.character)) %>% # ensure all are characters
+  pivot_longer(cols = everything(), 
+               names_to = "Feature", 
+               values_to = "Value") %>%        # long format for ggplot
+  ggplot(aes(x = Value, fill = Value)) +       # plot distribution
+  geom_bar() +
+  facet_wrap(~Feature, scales = "free") +      # facet by feature
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#Test of Association
+
+```{r,Chi-Square Test for Categorical Features, echo=TRUE}
+# Run chi-square tests (Binary target recommended)
+chi_results <- lapply(factor_cols, function(col) {
+  
+  tbl <- table(df[[col]], df$readmitted)
+  
+  # Only run if table has at least 2 rows and 2 columns
+  if (nrow(tbl) > 1 && ncol(tbl) > 1) {
+    
+    test <- suppressWarnings(chisq.test(tbl))
+    
+    return(data.frame(Feature = col, p_value = test$p.value))
+    
+  } else {
+    
+    return(data.frame(Feature = col, p_value = NA))
+  }
+  
+}) %>% bind_rows()
+
+# Sort by significance
+chi_results <- chi_results %>% arrange(p_value)
+
+print(chi_results)
+
+sig_cats <- chi_results %>% filter(!is.na(p_value) & p_value < 0.05)
+
+```
+
+
+#Bar Plots for Significant Categorical Features
+
+```{r,Bar Plots for Significant Categorical Features, echo=TRUE}
+# Plot only significant categorical features
+for (feature in sig_cats$Feature) {
+  
+  p <- ggplot(df, aes_string(x = feature, fill = factor(df$readmitted))) +
+    
+    geom_bar(position = "fill") +
+    
+    scale_fill_manual(values = c("0" = "skyblue", "1" = "tomato"),
+                      
+                      labels = c("No", "Within 30 days")) +
+    
+    labs(title = paste("Readmission Proportions by", feature),
+         
+         x = feature, y = "Proportion") +
+    
+    theme_minimal() +
+    
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  print(p)
+}
+```
+
+
+## Facet Plot for Multiple Categorical Features
+
+```{r,Facet Plot for Multiple Categorical Features,echo=TRUE}
+df %>%
+  dplyr::select(all_of(sig_cats$Feature), readmitted) %>%
+  
+  gather(key = "Feature", value = "Value", -readmitted) %>%
+  
+  ggplot(aes(x = Value, fill = factor(readmitted))) +
+  
+  geom_bar(position = "fill") +
+  
+  facet_wrap(~Feature, scales = "free") +
+  
+  scale_fill_manual(values = c("0" = "skyblue", "1" = "tomato"),
+                    
+                    labels = c("No", "Within 30 days")) +
+  
+  theme_minimal() +
+  
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+#Combine Results for Feature Selection
+
+```{r}
+#Combine Results for Feature Selection
+list(
+  Significant_Categorical = sig_cats$Feature,
+  Significant_Numeric = sig_nums$Feature
+)
+```
+
+
+#**Dynamic re-coding of all variables to NUMERIC**
+
+```{r}
+
+# Re-code all categorical types (character, factor, ordered factor) to numeric
+
+df_numeric_cats <- df %>%
+  
+  mutate(across(where(~ is.character(.) | is.factor(.) | is.ordered(.)),~ as.numeric(as.factor(.))))
+```
+
+
+```{r}
+#Correlation Matrix
+
+library(corrplot)
+df_numeric_cats<-na.omit(df_numeric_cats)
+
+cor_matrix <- round(cor(df_numeric_cats, use = "complete.obs"), digits = 1)
+
+
+#pdf("correlation_plot.pdf", width = 8, height = 8)
+
+corrplot(cor_matrix, method = "shade", addCoef.col="lightgreen", type="upper", tl.cex = 0.4, number.cex=0.4)
+
+```
+
+
+```{r}
+## Create a flex table with the Correlation Matrix
+
+Cor_Table<-data.frame(cor_matrix)
+
+flextable(Cor_Table)
+Cor_Table <- cbind(Feature = rownames(Cor_Table), Cor_Table)
+rownames(Cor_Table) <- NULL
+
+ft <- flextable(Cor_Table) %>%
+  autofit() %>%
+  set_header_labels(Feature = "Feature / Variable")
+ft
+# Convert flextable back to data frame
+df_export <- as.data.frame(ft$body$dataset)
+```
+
+
+#Modelling pipeline (df_sig)
+
+```{r}
+df_sig<-df[,c("race","age",  #Demographic Info
+              "time_in_hospital","number_inpatient","num_procedures",   #History
+              "num_lab_procedures","number_diagnoses","change","A1Cresult", #History
+              "number_emergency", "discharge_disposition_id","admission_type_id","number_outpatient" ,  #History
+              "num_medications", "max_glu_serum", "repaglinide", "glipizide" , "insulin", "metformin", "diabetesMed", "readmitted")] #medications
+
+# ensure target is factor with levels "no" and "yes"
+df_sig <- df_sig%>%
+  mutate(readmitted = factor(ifelse(readmitted==1, "yes", "no"), levels = c("no","yes")))
+
+```
+
+
+#Prepare data & split
+
+```{r,data split, echo=TRUE}
+
+set.seed(22061463)
+##stratified train/test data split    
+train_data <- df_sig %>%
+  
+  group_by(readmitted) %>%
+  
+  
+  sample_frac(0.8) %>%
+  
+  ungroup()
+
+test_data <- anti_join(df_sig, train_data, by = colnames(df_sig))
+```
+
+
+```{r}
+#Check proportions**
+
+prop.table(table(train_data$readmitted))
+
+prop.table(table(test_data$readmitted)) 
+
+```
+
+
+
+**models**
+
+```{r Logistic regression models, echo=FALSE}
+
+# Logistic regression (glm)
+log_model <- glm(readmitted ~ ., 
+                 data = train_data, 
+                 family = binomial)  
+summary(log_model)
+```
+
+
+```{r}
+library(dplyr)
+library(ranger)
+library(pROC)
+library(smotefamily)
+library(xgboost)
+library(caret)
+```
+
+
+
+```{r}
+library(caret)
+library(pROC)
+
+evaluate_from_probs <- function(pred_probs, y_true_factor, threshold = 0.3) {
+
+  # ensure proper factor coding
+  y_true_factor <- factor(y_true_factor, levels = c("no","yes"))
+  pred_class <- factor(ifelse(pred_probs >= threshold, "yes", "no"),
+                       levels = c("no","yes"))
+
+  cm <- confusionMatrix(pred_class, y_true_factor, positive = "yes")
+
+  roc_obj <- roc(response = y_true_factor,
+                 predictor = pred_probs,
+                 levels = c("no","yes"),
+                 direction = "<")
+
+  data.frame(
+    threshold   = threshold,
+    accuracy    = as.numeric(cm$overall["Accuracy"]),
+    precision   = as.numeric(cm$byClass["Precision"]),
+    recall      = as.numeric(cm$byClass["Recall"]),
+    specificity = as.numeric(cm$byClass["Specificity"]),
+    f1          = as.numeric(cm$byClass["F1"]),
+    auc         = as.numeric(auc(roc_obj))
+  )
+}
+```
+
+
+
+
+
+
+
+## MODEL 1: Logistic Regression (on IMBALANCED data)
+
+```{r}
+set.seed(421)
+log_model <- glm(readmitted ~ .,data   = train_data,   # <- imbalanced
+  family = binomial)
+
+log_pred_probs <- predict(log_model, newdata = test_data, type = "response")
+
+log_results <- evaluate_from_probs(
+  pred_probs    = log_pred_probs,
+  y_true_factor = test_data$readmitted,
+  threshold     = 0.3 #it was changed from 0.5 to 0.3 
+)
+log_results
+```
+
+
+
+## 2. SMOTE (Random Forest training)
+
+```{r}
+# Prepare numeric version for smotefamily::SMOTE
+train_data_numeric <- train_data %>% 
+  mutate(readmitted_num = as.numeric(readmitted) - 1) %>% 
+  dplyr::select(-readmitted)
+
+train_data_SMOTE_input <- train_data_numeric %>%
+  mutate(across(where(is.factor), as.numeric)) 
+
+# Separate features (X) and target (y)
+X <- train_data_SMOTE_input %>% dplyr::select(-readmitted_num)
+y <- train_data_SMOTE_input$readmitted_num   # numeric 0/1
+
+set.seed(42)
+smote_output <- SMOTE(
+  X,
+  y,
+  K = 3,        # 
+  dup_size = 0  # balance to majority class
+)
+
+train_data_SMOTE_balanced_raw <- smote_output$data
+
+train_data_SMOTE_balanced <- train_data_SMOTE_balanced_raw %>%
+  dplyr::rename(readmitted_num = class) %>%
+  mutate(
+    readmitted = factor(
+      ifelse(readmitted_num == 1, "yes", "no"),
+      levels = c("no", "yes")
+    )
+  ) %>%
+  dplyr::select(-readmitted_num)
+
+cat("Original train class proportion:\n")
+print(prop.table(table(train_data$readmitted)))
+
+cat("SMOTE-balanced train class proportion:\n")
+print(prop.table(table(train_data_SMOTE_balanced$readmitted)))
+```
+
+
+
+```{r}
+set.seed(421)
+rf_model <- ranger(
+  readmitted ~ .,
+  data = train_data_SMOTE_balanced,  # <- SMOTE-balanced
+  num.trees = 500,
+  mtry = 5,
+  min.node.size = 10,
+  probability = TRUE
+)
+
+rf_pred_probs <- predict(rf_model, data = test_data)$predictions[, "yes"]
+
+rf_results <- evaluate_from_probs(
+  pred_probs    = rf_pred_probs,
+  y_true_factor = test_data$readmitted,
+  threshold     = 0.3
+)
+rf_results
+
+```
+
+
+
+##  MODEL 3: XGBoost (on IMBALANCED data with class weights)
+
+```{r}
+set.seed(1235)
+# Numeric version of TRAIN data for XGBoost
+train_xgb <- train_data %>%
+  mutate(readmitted_num = ifelse(readmitted == "yes", 1, 0)) %>%
+  mutate(across(
+    .cols = where(~ is.factor(.) || is.ordered(.)),
+    .fns  = ~ as.numeric(as.factor(.))
+  ))
+
+# Numeric version of TEST data for XGBoost (same transformation)
+test_xgb <- test_data %>%
+  mutate(readmitted_num = ifelse(readmitted == "yes", 1, 0)) %>%
+  mutate(across(
+    .cols = where(~ is.factor(.) || is.ordered(.)),
+    .fns  = ~ as.numeric(as.factor(.))
+  ))
+# Use train levels to define encoding for both
+x_train <- model.matrix(readmitted ~ . - 1, data = train_data)
+x_test  <- model.matrix(readmitted ~ . - 1, data = test_data)
+
+y_train <- ifelse(train_data$readmitted == "yes", 1, 0)
+y_test  <- ifelse(test_data$readmitted == "yes", 1, 0)
+
+x_train <- as.matrix(dplyr::select(train_xgb, -readmitted, -readmitted_num))
+x_test  <- as.matrix(dplyr::select(test_xgb,  -readmitted, -readmitted_num))
+
+
+# Check dimensions match
+ncol(x_train); ncol(x_test)
+
+dtrain <- xgb.DMatrix(data = x_train, label = y_train)
+dtest  <- xgb.DMatrix(data = x_test,  label = y_test)
+
+# Class weight for imbalance
+pos_weight <- sum(y_train == 0) / sum(y_train == 1)
+
+
+
+  dtrain <- xgb.DMatrix(x_train, label = y_train)
+  dvalid <- xgb.DMatrix(x_test,  label = y_test)
+  
+  params <- list(
+    objective        = "binary:logistic",
+    eval_metric      = "auc",
+    eta              = 0.05,
+    max_depth        = 4,
+    subsample        = 0.8,
+    colsample_bytree = 0.8,
+    scale_pos_weight = pos_weight
+  )
+  
+  xgb_model <- xgb.train(
+    params = params,
+    data   = dtrain,
+    nrounds = 500,
+    evals = list(val = dvalid),
+    early_stopping_rounds = 20,
+    verbose = 0
+  )
+  
+  
+  
+xgb_pred_probs <- predict(xgb_model, dtest)
+y_test_factor  <- factor(ifelse(y_test == 1, "yes", "no"),
+                         levels = c("no", "yes"))
+
+
+
+```
+
+##  Check multiple thresholds for XGB
+
+```{r}
+set.seed(1235)
+##  Check multiple thresholds for XGB
+thresholds <- c(0.5, 0.3, 0.2, 0.1, 0.05)
+xgb_threshold_results <- do.call(
+  rbind,
+  lapply(thresholds, evaluate_from_probs,
+         pred_probs    = xgb_pred_probs,
+         y_true_factor = y_test_factor)
+)
+xgb_threshold_results
+```
+
+
+##  0.3 Threshold for XGB
+
+```{r}
+set.seed(1236)
+# 0.3 thresholds
+xgb_results <- evaluate_from_probs(
+  pred_probs    = xgb_pred_probs,
+  y_true_factor = y_test_factor,
+  threshold     = 0.3
+)
+xgb_results
+
+
+```
+
+
+
+#Generate ROC plot for XGB
+
+```{r}
+library(pROC)
+
+roc_xgb <- roc(
+  response  = y_test_factor,
+  predictor = xgb_pred_probs,
+  levels = c("no","yes"),
+  direction = "<"
+)
+
+```
+
+```{r}
+# Generate the ROC Plot with better label 
+plot(roc_xgb, 
+     main = "ROC Curve: XGBoost (Weighted)", 
+     col = "red", 
+     lwd = 2, 
+     print.auc = TRUE, 
+     print.auc.x = 0.3, print.auc.y = 0.5, # Moves the AUC text
+     print.thres = 0.3, 
+     print.thres.adj = c(1.1, 1.2),       
+     print.thres.cex = 0.8)               
+
+# Add a diagonal reference line
+abline(a = 0, b = 1, lty = 2, col = "gray")
+
+```
+
+
+### 6. FINAL COMPARISON TABLE 
+
+```{r}
+summary_table <- bind_rows(
+  log_results %>% mutate(Model = "Logistic Regression (imbalanced)"),
+  rf_results  %>% mutate(Model = "Random Forest (SMOTE-balanced)"),
+  xgb_results %>% mutate(Model = "XGBoost (weighted, thr=0.3)")
+) %>%
+  dplyr::select(Model, threshold, accuracy, precision, recall, specificity, f1, auc)
+
+summary_table
+```
+
