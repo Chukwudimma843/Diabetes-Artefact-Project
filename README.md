@@ -164,16 +164,19 @@ This comparison helped assess not only overall predictive performance, but also 
 
 ---
 
-## 📊 Key Outputs
+## 📈 Key Outputs
 
-The Rmd renders and/or saves:
-- ROC and PR curves comparing models
-- Confusion matrices & classification reports
-- Feature importance plots
-- Calibration plots (if enabled)
-- Exported artifacts (e.g., `models/`, `figs/`, `reports/`)
+This project generates several analytical and modeling outputs, including:
 
----
+- Data quality and missing-value summary tables
+- Exploratory visualisations for numeric and categorical features
+- Statistical significance testing for feature selection
+- Correlation analysis for selected variables
+- Train/test split and class balance summaries
+- Model performance results for Logistic Regression, Random Forest, and XGBoost
+- Threshold analysis for XGBoost
+- ROC curve visualisation
+- Final comparison table of all three models using Accuracy, Precision, Recall, Specificity, F1 Score, and AUC
 
 ## 🧾 Reproducibility
 
