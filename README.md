@@ -11,7 +11,7 @@ Predicting 30‑day hospital readmissions among diabetic patients using statisti
 
 This repository contains the full technical and statistical workflow for building and evaluating models to predict near‑term hospital readmission in diabetic patients. The analysis is implemented in R via an R Markdown report, with reproducible steps for data preparation, exploratory analysis, feature engineering, model development, and evaluation.
 
-**Core approaches:**t-test/ ANOVA, AUC, logistic regression, precision, random forest, XGBoost, recall,Specificity,F1-score and ROC analysis.
+**Core approaches:** ANOVA, AUC, logistic regression, precision, random forest, XGBoost, recall,Specificity,F1-score and ROC analysis.
 ---
 
 ## 🗂 Repository Structure
