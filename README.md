@@ -1,8 +1,8 @@
 # Hospital Readmission Prediction for Diabetic Patients
 
 This project compares three predictive approaches — Logistic Regression, Random Forest, and XGBoost — for predicting 30-day hospital readmission among diabetic patients.
-**Author:** Ugo  
-**Date:** April 2026
+**Author:** Ugochukwu chukwudimma  
+**Date:** updated in April 2026
 
 ---
 
