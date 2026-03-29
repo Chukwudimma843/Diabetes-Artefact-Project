@@ -277,7 +277,9 @@ No license has been specified for this project yet.
 
 ## 🤝 Contributing
 
-Suggestions and improvements are welcome. Please open an issue or discussion before making major changes.
+Contributions, suggestions, and improvements are welcome.
+
+If you would like to contribute, please open an issue or start a discussion to propose changes before submitting a pull request.
 
 ---
 
