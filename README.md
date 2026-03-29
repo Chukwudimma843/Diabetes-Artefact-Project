@@ -84,16 +84,53 @@ if (length(to_install)) install.packages(to_install, repos = "https://cloud.r-pr
 
 ## 🧪 Data & Features
 
-- **Dataset:** Diabetic patient records from multiple U.S. hospitals (1999–2008) — e.g., the UCI *Diabetes 130‑US hospitals* dataset (if applicable).  
-- **Target:** 30‑day readmission (yes/no).  
-- **Typical predictors:** demographics, admission details, comorbidities, medications, labs, length of stay, discharge disposition, prior utilization, and derived features (ratios/flags).  
-- **Pre‑processing:** missing‑value handling, outlier treatment, type coercion (factors vs numeric), data cleaning (e.g., `janitor::clean_names()`), train/test split with `set.seed(...)` for reproducibility.
+- **Dataset:** Diabetic patient records from 130 U.S. hospitals (1999–2008), based on the UCI diabetes readmission dataset.
+- **Target:** 30-day hospital readmission, recoded as a binary outcome:
+  - `1` = readmitted within 30 days (`<30`)
+  - `0` = not readmitted within 30 days
 
-### Class imbalance
-When positive class is rare, consider:
-- Stratified train/test split
-- Class weights (e.g., `glmnet`, `xgboost`)
-- Resampling: up‑sampling, down‑sampling, or SMOTE (`DMwR2::SMOTE()`)
+### Predictors
+
+The analysis used a selected set of demographic, clinical, utilisation, and medication-related variables, including:
+
+- Demographics: `race`, `age`
+- Hospital utilisation: `time_in_hospital`, `number_inpatient`, `number_outpatient`, `number_emergency`
+- Clinical activity: `num_procedures`, `num_lab_procedures`, `number_diagnoses`
+- Admission and discharge details: `admission_type_id`, `discharge_disposition_id`
+- Laboratory indicators: `A1Cresult`, `max_glu_serum`
+- Medication-related variables: `change`, `repaglinide`, `glipizide`, `insulin`, `metformin`, `diabetesMed`
+
+### Pre-processing
+
+The following preprocessing steps were applied:
+
+- The target variable `readmitted` was transformed into a binary classification outcome
+- Variables with high missingness were removed, including:
+  - `weight`
+  - `payer_code`
+  - `medical_specialty`
+- Non-informative identifiers and single-value variables were removed, including:
+  - `encounter_id`
+  - `patient_nbr`
+  - `examide`
+  - `citoglipton`
+- Missing values were imputed:
+  - numeric variables using the **mean**
+  - categorical variables using the **mode**
+- Ordered categorical encoding was applied to:
+  - `max_glu_serum`
+  - `A1Cresult`
+- Medication variables were standardised into grouped categorical form
+- A modelling subset of significant variables (`df_sig`) was created for downstream analysis
+- The dataset was split into training and test sets using a fixed random seed for reproducibility
+
+### Class Imbalance Handling
+
+Because 30-day readmission was the minority class, the project addressed class imbalance using:
+
+- **SMOTE** for Random Forest training
+- **Class weighting** for XGBoost
+- Evaluation with metrics such as Recall, Specificity, F1 Score, and AUC
 
 ---
 
