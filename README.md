@@ -166,18 +166,17 @@ This comparison helped assess not only overall predictive performance, but also 
 
 ## 📈 Key Outputs
 
-This project generates several analytical and modeling outputs, including:
-
-- Data quality and missing-value summary tables
-- Exploratory visualisations for numeric and categorical features
-- Statistical significance testing for feature selection
-- Correlation analysis for selected variables
-- Train/test split and class balance summaries
-- Model performance results for Logistic Regression, Random Forest, and XGBoost
-- Threshold analysis for XGBoost
-- ROC curve visualisation
-- Final comparison table of all three models using Accuracy, Precision, Recall, Specificity, F1 Score, and AUC
-
+- Missing data summary
+- EDA plots
+- Statistical test results
+- Correlation analysis
+- Train/test split summary
+- SMOTE class-balance output
+- Logistic Regression results
+- Random Forest results
+- XGBoost results
+- ROC curve
+- Final model comparison table
 ## 🧾 Reproducibility
 
 - Set random seeds with `set.seed(123)` (replace 123 with your chosen seed).
