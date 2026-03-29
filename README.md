@@ -177,11 +177,25 @@ This comparison helped assess not only overall predictive performance, but also 
 - XGBoost results
 - ROC curve
 - Final model comparison table
-## 🧾 Reproducibility
 
-- Set random seeds with `set.seed(123)` (replace 123 with your chosen seed).
-- Document data provenance; avoid committing sensitive data.
-- Record package versions: `sessionInfo()` output in the report.
+## 🔁 Reproducibility
+
+The analysis is designed to be fully reproducible.
+
+- A fixed random seed (`set.seed(123)`) ensures consistent train/test splits and model results  
+- All steps, including preprocessing, modeling, and evaluation, are contained within a single R Markdown file  
+- Required packages are explicitly listed for environment setup  
+
+To reproduce the results:
+
+1. Clone the repository  
+2. Add the dataset to the `data/` directory  
+3. Open and run the R Markdown file  
+
+Session information can be obtained using:
+
+```r
+sessionInfo()
 
 ---
 
