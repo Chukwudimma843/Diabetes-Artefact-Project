@@ -77,7 +77,7 @@ if (length(to_install)) install.packages(to_install, repos = "https://cloud.r-pr
 4. Click **Knit** to render to HTML/PDF/Word.  
    Or run:
    ```r
-   rmarkdown::render("Hospital Readmission Prediction for Diabetic Patients _Ugo Raw.Rmd")
+   rmarkdown::render("Re_admission Analysis2.Rmd")
    ```
 
 ---
