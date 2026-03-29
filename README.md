@@ -272,8 +272,7 @@ Formal references can also be added in a separate references file if needed.
 
 ## 📄 License
 
-You may add a license file, such as MIT, to clarify how this repository can be used and shared.
-
+No license has been specified for this project yet.
 ---
 
 ## 🤝 Contributing
