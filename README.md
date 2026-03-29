@@ -1,7 +1,6 @@
 # Hospital Readmission Prediction for Diabetic Patients
 
-Predicting 30‑day hospital readmissions among diabetic patients using statistical and machine‑learning approaches in R.
-
+This project compares three predictive approaches — Logistic Regression, Random Forest, and XGBoost — for predicting 30-day hospital readmission among diabetic patients.
 **Author:** Ugo  
 **Date:** April 2026
 
