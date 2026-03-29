@@ -252,31 +252,38 @@ sessionInfo()
 
 ## 🧠 Interpreting Results (What to look for)
 
-- Compare ROC‑AUC and PR‑AUC across models; for imbalanced data, **PR‑AUC differences are more informative**.
-- Inspect feature importances and logistic odds ratios; do they align with clinical expectations?
-- Evaluate calibration; if poorly calibrated, consider Platt scaling or isotonic regression.
-- Perform error analysis: which subgroups are most misclassified?
-
+ The results should be interpreted based on how well each model identifies patients at risk of 30-day readmission.
+Key points to consider include:
+Compare the performance of Logistic Regression, Random Forest, and XGBoost using Accuracy, Precision, Recall, Specificity, F1 Score, and AUC
+Use ROC-AUC to assess how well each model distinguishes between readmitted and non-readmitted patients
+Use the confusion matrix to understand the number of correct and incorrect classifications
+Pay close attention to Recall (Sensitivity), as this is especially important in healthcare settings where missing a high-risk patient can have serious consequences
+Consider Specificity alongside recall to assess how well the model avoids false alarms
+Review the threshold comparison results, especially for XGBoost, to understand how threshold selection affects classification performance
+Overall, the results should be interpreted not only in terms of overall model performance, but also in terms of clinical usefulness and the ability to correctly identify patients at higher risk of readmission.
 ---
 
 ## 📎 How to Cite
-
-If you use this code or report, please cite the repository and the underlying dataset (e.g., UCI Diabetes 130‑US hospitals). Add formal references in `docs/REFERENCES.md` as needed.
-
+If you use this project, please cite:
+this repository
+the dataset used in the analysis (for example, the UCI Diabetes 130-US hospitals dataset, if applicable)
+Formal references can also be added in a separate references file if needed.
 ---
 
 ## 📄 License
 
-Specify a license (e.g., MIT) in `LICENSE` to clarify usage permissions.
+You may add a license file, such as MIT, to clarify how this repository can be used and shared.
 
 ---
 
 ## 🤝 Contributing
 
-Issues and pull requests are welcome. Please open a discussion before major changes.
+Suggestions and improvements are welcome. Please open an issue or discussion before making major changes.
 
 ---
 
 ## 🗒 Notes
 
-- This README is auto‑generated based on your Rmd; adjust dataset details and paths where needed.
+This project presents a full workflow for predicting 30-day hospital readmission in diabetic patients using R
+The analysis includes data preprocessing, exploratory analysis, statistical testing, model development, and model evaluation
+The project compares three models: Logistic Regression, Random Forest, and XGBoost
