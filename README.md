@@ -15,20 +15,13 @@ This repository contains the full technical and statistical workflow for buildin
 
 ## 🗂 Repository Structure
 
-```text
-.
-├── data/                  # (optional) Raw/processed data (excluded from git if sensitive)
-├── scripts/               # Utility R scripts (if you split the Rmd later)
-├── models/                # Saved model objects / tuning artifacts
-├── figs/                  # Exported plots (ROC, PR, importances)
-├── reports/               # Rendered outputs (HTML/PDF/Word)
-├── docs/                  # Additional methodological notes
-├── Hospital Readmission Prediction for Diabetic Patients _Ugo Raw.Rmd
+├── data/
+├── models/
+├── figs/
+├── reports/
+├── docs/
+├── Re_admission Analysis2.Rmd
 └── README.md
-```
-
-> Tip: Add `data/` and any secrets to `.gitignore` if needed.
-
 ---
 
 ## 🔧 Environment & Setup
