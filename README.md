@@ -26,33 +26,54 @@ This repository contains the full technical and statistical workflow for buildin
 
 ## 🔧 Environment & Setup
 
+### Requirements
+
 - **R version:** 4.3+ recommended  
-- **RStudio:** 2023.12+ recommended  
-- **Primary packages:**  
-- `Hmisc`
-- `MASS`
-- `assertr`
-- `caret`
-- `class`
-- `corrplot`
-- `doParallel`
-- `dplyr`
-- `flextable`
-- `ggplot2`
-- `ggpubr`
-- `knitr`
-- `lme4`
-- `lubridate`
-- `officer`
+- **RStudio:** recommended for running and knitting the R Markdown file  
+
+### Packages Used
+
+The analysis relies on a range of packages for data import, preprocessing, visualisation, statistical analysis, model training, evaluation, and reporting.
+
 - `openxlsx`
-- `pROC`
+- `readxl`
+- `readr`
+- `doParallel`
+- `vip`
+- `Hmisc`
+- `corrplot`
+- `dplyr`
+- `ggplot2`
+- `knitr`
+- `class`
+- `lme4`
+- `MASS`
+- `tidyverse`
+- `assertr`
+- `ggpubr`
+- `lubridate`
+- `flextable`
 - `patchwork`
 - `randomForest`
-- `ranger`
-- `readr`
-- `readxl`
-- `tidyverse`
-- `vip`
+- `pROC`
+- `officer`
+- `caret`
+
+### Install Required Packages
+
+```r
+required_pkgs <- c(
+  "openxlsx", "readxl", "readr", "doParallel", "vip",
+  "Hmisc", "corrplot", "dplyr", "ggplot2", "knitr",
+  "class", "lme4", "MASS", "tidyverse", "assertr",
+  "ggpubr", "lubridate", "flextable", "patchwork",
+  "randomForest", "pROC", "officer", "caret"
+)
+
+to_install <- setdiff(required_pkgs, rownames(installed.packages()))
+if (length(to_install)) {
+  install.packages(to_install, repos = "https://cloud.r-project.org")
+}
 
 ### Install packages
 You can install any missing packages with:
