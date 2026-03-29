@@ -112,9 +112,41 @@ When positive class is rare, consider:
 - **Logistic regression (baseline):** interpretable odds‑ratio estimates; check multicollinearity (VIF), linearly separable effects, interaction terms as needed.
 - **Model diagnostics:** residual analysis, calibration (e.g., calibration curve, Brier score), and threshold analysis.
 
-### Machine learning models
-- **Random Forest:** non‑linear interactions, robust to noise; tune trees (`ntree`), depth, and `mtry` via cross‑validation.
-- **XGBoost:** gradient boosting on decision trees; tune `eta`, `max_depth`, `min_child_weight`, `subsample`, `colsample_bytree`, `lambda`, `alpha`, `nrounds` with k‑fold CV.
+## 🤖 Machine Learning Models
+
+Three predictive models were developed and compared in this project:
+
+### 1. Logistic Regression
+- Used as a baseline statistical model
+- Suitable for binary classification
+- Provides interpretable coefficients and helps explain how predictors influence readmission risk
+
+### 2. Random Forest
+- An ensemble tree-based model
+- Captures non-linear relationships and feature interactions
+- Useful for handling complex healthcare data with mixed variable types
+
+### 3. XGBoost
+- A gradient boosting model designed for high predictive performance
+- Handles complex patterns, non-linearity, and interactions effectively
+- Often performs well on structured/tabular datasets such as hospital readmission data
+- Included in this project to compare a more advanced boosting approach against Logistic Regression and Random Forest
+
+---
+
+## 📊 Model Evaluation
+
+The three models were evaluated and compared using:
+
+- ROC-AUC
+- Confusion Matrix
+- Accuracy
+- Precision
+- Recall
+- Specificity
+- F1 Score
+
+This comparison helped assess not only overall predictive performance, but also how well each model identified patients at risk of 30-day readmission.
 
 ### Validation strategy
 - **Train/test split** with fixed `set.seed(...)` for reproducibility.
