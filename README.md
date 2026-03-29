@@ -155,7 +155,6 @@ This comparison helped assess not only overall predictive performance, but also 
 
 ### Evaluation metrics
 - **ROC‑AUC:** overall ranking performance.
-- **Precision–Recall curve & AUC:** preferred for imbalanced targets; emphasizes positive class.
 - **Sensitivity, Specificity, Precision, Recall, F1‑score.**
 - **Confusion matrix** at selected threshold(s).
 - **Calibration** (reliability) to ensure predicted probabilities are meaningful.
