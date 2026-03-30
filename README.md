@@ -6,14 +6,14 @@ This project compares three predictive approaches — Logistic Regression, Rando
 
 ---
 
-## 📌 Project Overview
+##  Project Overview
 
 This repository contains the full technical and statistical workflow for building and evaluating models to predict near‑term hospital readmission in diabetic patients. The analysis is implemented in R via an R Markdown report, with reproducible steps for data preparation, exploratory analysis, feature engineering, model development, and evaluation.
 
 **Core approaches:** ANOVA, AUC, logistic regression, precision, random forest, XGBoost, recall,Specificity,F1-score and ROC analysis.
 ---
 
-## 🗂 Repository Structure
+##  Repository Structure
 
 ├── data/
 ├── models/
@@ -24,7 +24,7 @@ This repository contains the full technical and statistical workflow for buildin
 └── README.md
 ---
 
-## 🔧 Environment & Setup
+##  Environment & Setup
 
 ### Requirements
 
@@ -85,7 +85,7 @@ if (length(to_install)) install.packages(to_install, repos = "https://cloud.r-pr
 
 ---
 
-## ▶️ How to Reproduce
+##  How to Reproduce
 
 1. Clone this repository:
    ```bash
@@ -103,7 +103,7 @@ if (length(to_install)) install.packages(to_install, repos = "https://cloud.r-pr
 
 ---
 
-## 🧪 Data & Features
+##  Data & Features
 
 - **Dataset:** Diabetic patient records from 130 U.S. hospitals (1999–2008), based on the UCI diabetes readmission dataset.
 - **Target:** 30-day hospital readmission, recoded as a binary outcome:
@@ -155,14 +155,14 @@ Because 30-day readmission was the minority class, the project addressed class i
 
 ---
 
-## 📐 Statistical & ML Methods (Direct Explanation)
+##  Statistical & ML Methods (Direct Explanation)
 
 ### Statistical framing
 - **Univariate screening:** t‑tests / ANOVA for numeric features and chi‑squared tests for categorical features to identify variables associated with readmission.
 - **Logistic regression (baseline):** interpretable odds‑ratio estimates; check multicollinearity (VIF), linearly separable effects, interaction terms as needed.
 - **Model diagnostics:** residual analysis, calibration (e.g., calibration curve, Brier score), and threshold analysis.
 
-## 🤖 Machine Learning Models
+##  Machine Learning Models
 
 Three predictive models were developed and compared in this project:
 
@@ -184,7 +184,7 @@ Three predictive models were developed and compared in this project:
 
 ---
 
-## 📊 Model Evaluation
+##  Model Evaluation
 
 The three models were evaluated and compared using:
 
@@ -215,7 +215,7 @@ This comparison helped assess not only overall predictive performance, but also 
 
 ---
 
-## 📈 Key Outputs
+##  Key Outputs
 
 - Missing data summary
 - EDA plots
@@ -229,7 +229,7 @@ This comparison helped assess not only overall predictive performance, but also 
 - ROC curve
 - Final model comparison table
 
-## 🔁 Reproducibility
+##  Reproducibility
 
 The analysis is designed to be fully reproducible.
 
@@ -250,7 +250,7 @@ sessionInfo()
 
 ---
 
-## 🧠 Interpreting Results (What to look for)
+##  Interpreting Results (What to look for)
 
  The results should be interpreted based on how well each model identifies patients at risk of 30-day readmission.
 Key points to consider include:
@@ -263,19 +263,19 @@ Review the threshold comparison results, especially for XGBoost, to understand h
 Overall, the results should be interpreted not only in terms of overall model performance, but also in terms of clinical usefulness and the ability to correctly identify patients at higher risk of readmission.
 ---
 
-## 📎 How to Cite
+##  How to Cite
 If you use this project, please cite:
 this repository
 the dataset used in the analysis (for example, the UCI Diabetes 130-US hospitals dataset, if applicable)
 Formal references can also be added in a separate references file if needed.
 ---
 
-## 📄 License
+##  License
 
 No license has been specified for this project yet.
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions, suggestions, and improvements are welcome.
 
@@ -283,7 +283,7 @@ If you would like to contribute, please open an issue or start a discussion to p
 
 ---
 
-## 🗒 Notes
+## Notes
 
 This project presents a full workflow for predicting 30-day hospital readmission in diabetic patients using R
 The analysis includes data preprocessing, exploratory analysis, statistical testing, model development, and model evaluation
