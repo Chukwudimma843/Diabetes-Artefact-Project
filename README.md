@@ -160,7 +160,7 @@ Because 30-day readmission was the minority class, the project addressed class i
 ### Statistical framing
 - **Univariate screening:** t‑tests / ANOVA for numeric features and chi‑squared tests for categorical features to identify variables associated with readmission.
 - **Logistic regression (baseline):** interpretable odds‑ratio estimates; check multicollinearity (VIF), linearly separable effects, interaction terms as needed.
-- **Model diagnostics:** residual analysis, calibration (e.g., calibration curve, Brier score), and threshold analysis.
+- **Model diagnostics:** Threshold analysis.
 
 ##  Machine Learning Models
 
