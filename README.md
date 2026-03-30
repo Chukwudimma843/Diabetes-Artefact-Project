@@ -200,7 +200,7 @@ This comparison helped assess not only overall predictive performance, but also 
 
 ### Validation strategy
 - **Train/test split** with fixed `set.seed(...)` for reproducibility.
-- **k‑fold cross‑validation** for tuning hyperparameters.
+
 - **Threshold selection:** based on precision‑recall trade‑offs and cost sensitivity (e.g., maximize F1 or set recall ≥ target).
 
 ### Evaluation metrics
