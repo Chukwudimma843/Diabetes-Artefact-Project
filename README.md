@@ -206,8 +206,8 @@ This comparison helped assess not only overall predictive performance, but also 
 ### Evaluation metrics
 - **ROC‑AUC:** overall ranking performance.
 - **Sensitivity, Specificity, Precision, Recall, F1‑score.**
-- **Confusion matrix** at selected threshold(s).
-- **Calibration** (reliability) to ensure predicted probabilities are meaningful.
+- 
+  
 
 ### Explainability
 - **Global:** permutation/GINI importances (RF), gain/cover (XGB).
