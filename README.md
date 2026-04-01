@@ -189,7 +189,6 @@ Three predictive models were developed and compared in this project:
 The three models were evaluated and compared using:
 
 - ROC-AUC
-- Confusion Matrix
 - Accuracy
 - Precision
 - Recall
