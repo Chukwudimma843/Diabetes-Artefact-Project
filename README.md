@@ -93,7 +93,7 @@ if (length(to_install)) install.packages(to_install, repos = "https://cloud.r-pr
    cd YOUR-REPO
    ```
 2. Open the R Markdown file in RStudio:  
-   `Hospital Readmission Prediction for Diabetic Patients _Ugo Raw.Rmd`
+   `Hospital_Readmission_Prediction_Diabetic_Patients_Ugo.Rmd`
 3. (Optional) Place your dataset(s) under `data/` and update paths in the Rmd.
 4. Click **Knit** to render to HTML/PDF/Word.  
    Or run:
