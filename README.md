@@ -209,8 +209,23 @@ This comparison helped assess not only overall predictive performance, but also 
   
 
 ### Explainability
-- **Global:** permutation/GINI importances (RF), gain/cover (XGB).
-- **Local (optional):** coefficients for logistic regression; consider partial‑dependence profiles or accumulated local effects if added later.
+
+- **Global Explainability:**
+  - Feature importance from **Random Forest (ranger)** using impurity-based importance.
+  - Feature importance from **XGBoost** based on gain, identifying variables that contribute most to prediction.
+  - Provides an overall understanding of key drivers of hospital readmission.
+
+- **Model-Specific Interpretability:**
+  - **Logistic Regression coefficients** used to interpret the direction and magnitude (log-odds) of predictors.
+  - Enables clinically meaningful interpretation (e.g., which factors increase or decrease readmission risk).
+
+- **Limitations:**
+  - Tree-based models (Random Forest, XGBoost) are less interpretable compared to logistic regression.
+  - No instance-level explanations were implemented.
+
+- **Future Explainability Enhancements:**
+  - SHAP (SHapley Additive Explanations) for patient-level predictions.
+  - Partial Dependence Plots (PDP) or Accumulated Local Effects (ALE) to understand feature impact.
 
 ---
 
